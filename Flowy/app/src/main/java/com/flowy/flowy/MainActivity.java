@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     public void tankRefill(View view) {
         TextView remainingFuelText = (TextView) findViewById(R.id.tankRemainText);
         remainingFuelText.setText("Gas remaining: 100% ");
+        sendNotification("100%");
     }
 
     private void sendNotification(String gasLeft) {
