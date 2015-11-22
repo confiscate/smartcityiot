@@ -12,16 +12,17 @@ import android.support.v4.app.NotificationCompat;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
+
+    public final static String TANK_MESSAGE = "TANK_SIZE";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        sendNotification("9%");
     }
 
     @Override
@@ -46,29 +47,13 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void tankRefill(View view) {
-        TextView remainingFuelText = (TextView) findViewById(R.id.tankRemainText);
-        remainingFuelText.setText("Gas remaining: 100% ");
-        sendNotification("100%");
+    public void nextClick(View view) {
+        Intent intent = new Intent(this, RemainNoticeActivity.class);
+        EditText editText = (EditText) findViewById(R.id.tankSizeField);
+        intent.putExtra(TANK_MESSAGE, editText.getText().toString());
+
+        System.out.println(editText.getText());
+        startActivity(intent);
     }
 
-    private void sendNotification(String gasLeft) {
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
-                PendingIntent.FLAG_ONE_SHOT);
-
-        Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.gas)
-                .setContentTitle("Flowy")
-                .setContentText("gas left: " + gasLeft)
-                .setSound(defaultSoundUri)
-                .setAutoCancel(true)
-                .setContentIntent(pendingIntent);
-
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.notify(0, notificationBuilder.build());
-    }
 }
