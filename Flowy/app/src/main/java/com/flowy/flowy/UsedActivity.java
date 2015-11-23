@@ -18,9 +18,11 @@ import android.widget.TextView;
  */
 public class UsedActivity extends AppCompatActivity {
     private String URL = "http://ooflo.ngrok.com/status";
+    private String REFILL_URL = "http://ooflo.ngrok.com/refuel";
     private String remaining_notice = "";
     private String tank_size = "";
 
+    public static int gasPercentLeft = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,9 +35,15 @@ public class UsedActivity extends AppCompatActivity {
 
 
         System.out.println("tank size: " + tank_size);
+        gasPercentLeft = 100;
+        updateUsage();
 
-        float used = 0.25f;
+        new RequestTask(this, remaining_notice, tank_size, (ProgressBar) findViewById(R.id.used_progress),
+                (TextView) findViewById(R.id.setUsedText)).execute(URL);
+    }
 
+    public void updateUsage() {
+        float used = (100 - gasPercentLeft) * 1.0f;
         TextView leftOver = (TextView) findViewById(R.id.setUsedText);
         leftOver.setText("Used: " + (Integer.parseInt(tank_size) * used) + " gal");
 
@@ -43,11 +51,9 @@ public class UsedActivity extends AppCompatActivity {
         progress.setProgress((int) ((1 - used) * 100));
 
         sendNotification(tank_size);
-
-        new RequestTask().execute(URL);
     }
 
-    private void sendNotification(String gasLeft) {
+    public void sendNotification(String gasLeft) {
         Intent intent = new Intent(this, UsedActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
@@ -69,13 +75,9 @@ public class UsedActivity extends AppCompatActivity {
 
 
     public void refillTank(View view) {
-        TextView usedText = (TextView) findViewById(R.id.setUsedText);
-        usedText.setText("Used: " + "0" + " gal");
-
-        ProgressBar progress = (ProgressBar) findViewById(R.id.used_progress);
-        progress.setProgress(100);
-
-        sendNotification(tank_size);
+        gasPercentLeft = 100;
+        updateUsage();
+        new RefillRequestTask().execute(REFILL_URL);
     }
 
 }

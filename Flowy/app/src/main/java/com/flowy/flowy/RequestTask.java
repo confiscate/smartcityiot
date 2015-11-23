@@ -1,6 +1,15 @@
 package com.flowy.flowy;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.v4.app.NotificationCompat;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -17,6 +26,20 @@ import cz.msebera.android.httpclient.impl.client.DefaultHttpClient;
  * Created by henrylau on 11/21/15.
  */
 public class RequestTask extends AsyncTask<String, String, String> {
+    private ProgressBar bar;
+    private TextView left;
+    private String tank_size;
+    private String remaining_notice;
+    private UsedActivity usedActivity;
+
+    public RequestTask(UsedActivity activity, String remaining_notice, String tank_size, ProgressBar bar, TextView left) {
+        this.bar = bar;
+        this.left = left;
+        this.tank_size = tank_size;
+        this.remaining_notice = remaining_notice;
+        this.usedActivity = activity;
+    }
+
     @Override
     protected String doInBackground(String... uri) {
         HttpClient httpclient = new DefaultHttpClient();
@@ -33,6 +56,12 @@ public class RequestTask extends AsyncTask<String, String, String> {
                 out.close();
 
                 System.out.println(responseString);
+
+                int gasLeft = Integer.parseInt(responseString);
+                if (UsedActivity.gasPercentLeft != gasLeft && gasLeft < Integer.parseInt(remaining_notice)) {
+                    this.usedActivity.sendNotification(responseString);
+                }
+                UsedActivity.gasPercentLeft = gasLeft;
             } else {
                 //Closes the connection.
                 response.getEntity().getContent().close();
@@ -42,7 +71,7 @@ public class RequestTask extends AsyncTask<String, String, String> {
             //TODO Handle problems..
         }
         try {
-            Thread.sleep(10 * 1000);                 //1000 milliseconds is one second.
+            Thread.sleep(2 * 1000);                 //1000 milliseconds is one second.
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
         }
@@ -54,6 +83,11 @@ public class RequestTask extends AsyncTask<String, String, String> {
         super.onPostExecute(result);
         //Do anything with response..
 
-        new RequestTask().execute(result);
+        float used = (float) (100 - UsedActivity.gasPercentLeft) / 100.0f * 1.0f;
+        System.out.println("New used: " + used);
+        String galLeft = String.format("%.2f", Integer.parseInt(tank_size) * used);
+        left.setText("Used: " + galLeft + " gal");
+        bar.setProgress((int) ((1 - used) * 100));
+        new RequestTask(this.usedActivity, this.remaining_notice, this.tank_size, this.bar, this.left).execute(result);
     }
 }
